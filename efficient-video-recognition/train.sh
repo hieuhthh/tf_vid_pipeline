@@ -21,7 +21,7 @@ python -u -m torch.distributed.run --nproc_per_node 1 \
     --auto_resume \
     --train_list_path ../train.txt \
     --val_list_path ../val.txt \
-    --batch_size 96 \
+    --batch_size 80 \
     --batch_split 1 \
     --auto_augment rand-m7-n4-mstd0.5-inc1 \
     --mean 0.48145466 0.4578275 0.40821073 \
