@@ -2,7 +2,7 @@
 # sudo kill -9 PID
 
 exp_dir=runs/k400_vitb16_16f_dec4x768
-weight_path=/home/huynx2/hieunmt/eff_vid_reg/efficient-video-recognition/runs/k400_vitb16_8f_dec4x768/checkpoint-210.pth
+weight_path=${exp_dir}/best-checkpoint.pth
 
 mkdir -p "${exp_dir}"
 CUDA_VISIBLE_DEVICES=0 python -u -m torch.distributed.run --nproc_per_node 1 --master_port=6969 \

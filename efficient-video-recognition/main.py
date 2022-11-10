@@ -248,10 +248,12 @@ def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
     global is_best
 
     if acc > max_acc:
-        print(f'Max Accuracy improve from {max_acc} to {acc}')
+        print(f'Max Accuracy improves from {max_acc} to {acc} %')
 
         max_acc = acc
         is_best = True
+    else:
+        print(f'Accuracy doesnt improve from {max_acc} %')
 
 def do_infer(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
     tot = 0

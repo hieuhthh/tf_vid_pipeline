@@ -6,10 +6,10 @@ exp_dir=runs/k400_vitb16_16f_dec4x768
 mkdir -p "${exp_dir}"
 python -u -m torch.distributed.run --nproc_per_node 1 \
   main.py \
-    --num_steps 500 \
-    --save_freq 1 \
-    --eval_freq 1 \
-    --print_freq 1 \
+    --num_steps 300 \
+    --save_freq 15 \
+    --eval_freq 15 \
+    --print_freq 5 \
     --backbone "ViT-B/16-lnpre" \
     --backbone_type clip \
     --backbone_path ../download/ViT-B-16.pt \
