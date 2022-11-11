@@ -1,23 +1,19 @@
 #!/usr/bin/env sh
 # sudo kill -9 PID
 
-exp_dir=runs/zla22_vitb16_16f_dec4x768_pretrain
+exp_dir=k400_pretrain
 
 mkdir -p "${exp_dir}"
 python -u -m torch.distributed.run --nproc_per_node 1 \
-  main.py \
-    --num_steps 500 \
-    --save_freq 5 \
-    --eval_freq 5 \
-    --print_freq 5 \
+  convert_weight.py \
     --backbone "ViT-B/16-lnpre" \
     --backbone_type clip \
     --backbone_path ../download/ViT-B-16.pt \
-    --pretrain k400_pretrain/pretrain-checkpoint.pth \
+    --pretrain ../download/k400_vitb16_16f_dec4x768.pth \
     --decoder_num_layers 4 \
     --decoder_qkv_dim 768 \
     --decoder_num_heads 12 \
-    --num_classes 2 \
+    --num_classes 400 \
     --checkpoint_dir "${exp_dir}" \
     --auto_resume \
     --train_list_path ../train.txt \

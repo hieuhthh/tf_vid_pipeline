@@ -83,7 +83,8 @@ def save_checkpoint(
     loss_scaler: torch.cuda.amp.grad_scaler.GradScaler,
     next_step: int,
     args: argparse.Namespace,
-    is_best=False
+    is_best=False,
+    is_pretrain=False
 ):
     if args.checkpoint_dir is None:
         return
@@ -102,5 +103,8 @@ def save_checkpoint(
     if is_best:
         torch.save(to_save, os.path.join(args.checkpoint_dir, f'best-checkpoint.pth'))
         is_best = False
+
+    if is_pretrain:
+        torch.save(to_save, os.path.join(args.checkpoint_dir, f'pretrain-checkpoint.pth'))
 
     torch.save(to_save, os.path.join(args.checkpoint_dir, f'checkpoint-{next_step}.pth'))

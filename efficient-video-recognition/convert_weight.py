@@ -17,9 +17,6 @@ from vision_transformer import vit_presets
 import numpy as np
 import pandas as pd
 
-max_acc = 0
-is_best = False
-
 def setup_print(is_master: bool):
     """
     This function disables printing when not in master process
@@ -34,7 +31,6 @@ def setup_print(is_master: bool):
             builtin_print(*args, **kwargs)
 
     builtins.print = print
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -134,165 +130,10 @@ def main():
 
     resume_step = checkpoint.resume_from_checkpoint(model, optimizer, lr_sched, loss_scaler, args)
 
-    val_loader = video_dataset.create_val_loader(args)
+    print(model)
+    model.module.proj = model.module.proj[:-1] 
+    print(model)
 
-    if args.infer_only:
-        print('Running in infer_only mode.')
-        model.eval()
-        do_infer(model, val_loader)
-        return
-
-    if args.eval_only:
-        print('Running in eval_only mode.')
-        model.eval()
-        evaluate(model, val_loader)
-        return
-    else:
-        assert args.train_list_path is not None, 'Train list path must be specified if not in eval_only mode.'
-        train_loader = video_dataset.create_train_loader(args, resume_step=resume_step)
-
-    assert len(train_loader) == args.num_steps - resume_step
-    batch_st, train_st = datetime.now(), datetime.now()
-    for i, (data, labels) in enumerate(train_loader, resume_step):
-        data, labels = data.cuda(), labels.cuda()
-        data_ed = datetime.now()
-
-        optimizer.zero_grad()
-
-        assert data.size(0) % args.batch_split == 0
-        split_size = data.size(0) // args.batch_split
-        hit1, hit5, loss_value = 0, 0, 0
-        for j in range(args.batch_split):
-            data_slice = data[split_size * j: split_size * (j + 1)]
-            labels_slice = labels[split_size * j: split_size * (j + 1)]
-
-            with torch.cuda.amp.autocast(args.fp16):
-                logits = model(data_slice)
-                loss = criterion(logits, labels_slice)
-                
-            if labels.dtype == torch.long: # no mixup, can calculate accuracy
-                hit1 += (logits.topk(1, dim=1)[1] == labels_slice.view(-1, 1)).sum().item()
-                # hit5 += (logits.topk(5, dim=1)[1] == labels_slice.view(-1, 1)).sum().item()
-            loss_value += loss.item() / args.batch_split
-            
-            loss_scaler.scale(loss / args.batch_split).backward()
-        
-        loss_scaler.step(optimizer)
-        loss_scaler.update()
-        lr_sched.step()
-
-        batch_ed = datetime.now()
-
-        if i % args.print_freq == 0:
-            sync_tensor = torch.Tensor([loss_value, hit1 / data.size(0), hit5 / data.size(0)]).cuda()
-            dist.all_reduce(sync_tensor)
-            sync_tensor = sync_tensor.cpu() / dist.get_world_size()
-            loss_value, acc1, acc5 = sync_tensor.tolist()
-
-            print(
-                f'batch_time: {(batch_ed - batch_st).total_seconds():.3f}  '
-                f'data_time: {(data_ed - batch_st).total_seconds():.3f}  '
-                f'ETA: {(batch_ed - train_st) / (i - resume_step + 1) * (args.num_steps - i - 1)}  |  '
-                f'lr: {optimizer.param_groups[0]["lr"]:.6f}  '
-                f'loss: {loss_value:.6f}' + (
-                    f'  acc1: {acc1 * 100:.2f}%  acc5: {acc5 * 100:.2f}%' if labels.dtype == torch.long else ''
-                )
-            )
-        
-        if (i + 1) % args.eval_freq == 0:
-            print('Start model evaluation at step', i + 1)
-            model.eval()
-            evaluate(model, val_loader)
-            model.train()
-
-        global is_best
-
-        if (i + 1) % args.save_freq == 0:
-            checkpoint.save_checkpoint(model, optimizer, lr_sched, loss_scaler, i + 1, args, is_best)
-        
-        batch_st = datetime.now()
-
-
-def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
-    tot, hit1, hit5 = 0, 0, 0
-    eval_st = datetime.now()
-    for data, labels in loader:
-        data, labels = data.cuda(), labels.cuda()
-        assert data.size(0) == 1
-        if data.ndim == 6:
-            data = data[0] # now the first dimension is number of views
-
-        with torch.no_grad():
-            logits = model(data)
-            scores = logits.softmax(dim=-1).mean(dim=0)
-
-        tot += 1
-        hit1 += (scores.topk(1)[1] == labels).sum().item()
-        # hit5 += (scores.topk(5)[1] == labels).sum().item()
-
-        if tot % 20 == 0:
-            print(f'[Evaluation] num_samples: {tot}  '
-                  f'ETA: {(datetime.now() - eval_st) / tot * (len(loader) - tot)}  '
-                  f'cumulative_acc1: {hit1 / tot * 100.:.2f}%  '
-                  f'cumulative_acc5: {hit5 / tot * 100.:.2f}%')
-
-    sync_tensor = torch.LongTensor([tot, hit1, hit5]).cuda()
-    dist.all_reduce(sync_tensor)
-    tot, hit1, hit5 = sync_tensor.cpu().tolist()
-
-    print(f'Accuracy on validation set: top1={hit1 / tot * 100:.4f}%, top5={hit5 / tot * 100:.4f}%')
-
-    acc = hit1 / tot * 100
-
-    global max_acc
-    global is_best
-
-    if acc > max_acc:
-        print(f'Max Accuracy improves from {max_acc} to {acc} %')
-
-        max_acc = acc
-        is_best = True
-    else:
-        print(f'Accuracy doesnt improve from {max_acc} %')
-
-def do_infer(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
-    tot = 0
-    fname = []
-    liveness_score = []
-
-    eval_st = datetime.now()
-    for data, labels in loader:
-        data = data.cuda()
-        assert data.size(0) == 1
-        if data.ndim == 6:
-            data = data[0] # now the first dimension is number of views
-
-        with torch.no_grad():
-            logits = model(data)
-            scores = logits.softmax(dim=-1).mean(dim=0)
-
-        labels = labels[0]
-        scores = scores.cpu().tolist()[1] # real
-
-        # print(labels, scores)
-
-        fname.append(labels)
-        liveness_score.append(scores)
-
-        tot += 1
-        if tot % 20 == 0:
-            print(f'[Evaluation] num_samples: {tot}  '
-                  f'ETA: {(datetime.now() - eval_st) / tot * (len(loader) - tot)}  '
-                 )
-
-    sync_tensor = torch.LongTensor([tot]).cuda()
-    dist.all_reduce(sync_tensor)
-    tot = sync_tensor.cpu().tolist()
-
-    submit = pd.DataFrame({'fname':fname, 'liveness_score':liveness_score})
-    submit.to_csv("submit.csv", index=False)
-
-    print(f'Finished')
-    print(f'Time to infer each video:', (datetime.now() - eval_st) / len(loader))
+    checkpoint.save_checkpoint(model, optimizer, lr_sched, loss_scaler, 0, args, is_pretrain=True)
 
 if __name__ == '__main__': main()
