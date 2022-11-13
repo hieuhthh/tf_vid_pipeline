@@ -1,21 +1,21 @@
 #!/usr/bin/env sh
 # sudo kill -9 PID
 
-exp_dir=runs/k400_vitl14_16f_dec4x1024
+exp_dir=runs/k400_vitb16_32f_dec4x768
 
-weight_path=${exp_dir}/checkpoint-500.pth
+weight_path=${exp_dir}/best-checkpoint.pth
 
 mkdir -p "${exp_dir}"
 CUDA_VISIBLE_DEVICES=0 python -u -m torch.distributed.run --nproc_per_node 1 --master_port=6969 \
   main.py \
     --infer_only \
     --pretrain $weight_path \
-    --backbone "ViT-L/14-lnpre" \
+    --backbone "ViT-B/16-lnpre" \
     --backbone_type clip \
-    --backbone_path ../download/ViT-L-14.pt \
+    --backbone_path ../download/ViT-B-16.pt \
     --decoder_num_layers 4 \
-    --decoder_qkv_dim 1024 \
-    --decoder_num_heads 16 \
+    --decoder_qkv_dim 768 \
+    --decoder_num_heads 12 \
     --num_classes 2 \
     --checkpoint_dir "${exp_dir}" \
     --val_list_path ../test.txt \

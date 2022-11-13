@@ -35,6 +35,18 @@ except:
 # output = f"{des}/seed_1024_20_fold_0.zip"
 # gdown.download(url=url, output=output, quiet=False, fuzzy=True)
 
-url = "https://drive.google.com/file/d/1dax4qUIOEI_QzYXv31J-87cDkonQetVQ/view?usp=sharing"
-output = f"{des}/k400_vitb16_16f_dec4x768.pth"
+# url = "https://drive.google.com/file/d/1dax4qUIOEI_QzYXv31J-87cDkonQetVQ/view?usp=sharing"
+# output = f"{des}/k400_vitb16_16f_dec4x768.pth"
+# gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+
+# url = "https://drive.google.com/file/d/19T_NN3baGqSlRv9t4I650oA9B0_81JXg/view?usp=share_link"
+# output = f"{des}/seed_128_10_fold_0.zip"
+# gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+
+# url = "https://drive.google.com/file/d/1CTV9geLD3HLWzByAQUOf_m0F_g2lE3rg/view?usp=sharing"
+# output = f"{des}/k400_vitl14_16f_dec4x1024.pth"
+# gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+
+url = "https://drive.google.com/file/d/1fGLhe1sOMo0OuFn3qC4qjn4CohJeJ22a/view?usp=share_link"
+output = f"{des}/ViT-L-14.pt"
 gdown.download(url=url, output=output, quiet=False, fuzzy=True)

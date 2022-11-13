@@ -17,7 +17,10 @@ from vision_transformer import vit_presets
 import numpy as np
 import pandas as pd
 
+from glob import glob
+
 max_acc = 0
+min_loss = 1e10
 is_best = False
 
 def setup_print(is_master: bool):
@@ -152,6 +155,7 @@ def main():
         train_loader = video_dataset.create_train_loader(args, resume_step=resume_step)
 
     assert len(train_loader) == args.num_steps - resume_step
+    criterion = torch.nn.CrossEntropyLoss()
     batch_st, train_st = datetime.now(), datetime.now()
     for i, (data, labels) in enumerate(train_loader, resume_step):
         data, labels = data.cuda(), labels.cuda()
@@ -215,6 +219,7 @@ def main():
 
 def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
     tot, hit1, hit5 = 0, 0, 0
+    loss_value = 0
     eval_st = datetime.now()
     for data, labels in loader:
         data, labels = data.cuda(), labels.cuda()
@@ -225,6 +230,9 @@ def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
         with torch.no_grad():
             logits = model(data)
             scores = logits.softmax(dim=-1).mean(dim=0)
+            loss = criterion(logits, labels)
+        
+        loss_value += loss.item()
 
         tot += 1
         hit1 += (scores.topk(1)[1] == labels).sum().item()
@@ -241,19 +249,29 @@ def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
     tot, hit1, hit5 = sync_tensor.cpu().tolist()
 
     print(f'Accuracy on validation set: top1={hit1 / tot * 100:.4f}%, top5={hit5 / tot * 100:.4f}%')
+    print('Loss on validation set:', loss_value)
 
     acc = hit1 / tot * 100
 
     global max_acc
+    global min_loss
     global is_best
 
     if acc > max_acc:
         print(f'Max Accuracy improves from {max_acc} to {acc} %')
 
         max_acc = acc
-        is_best = True
+        # is_best = True
     else:
         print(f'Accuracy doesnt improve from {max_acc} %')
+
+    if loss_value < min_loss:
+        print(f'Min Loss improves from {min_loss} to {loss_value}')
+
+        min_loss = loss_value
+        is_best = True
+    else:
+        print(f'Loss doesnt improve from {min_loss}')
 
 def do_infer(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
     tot = 0
@@ -290,9 +308,13 @@ def do_infer(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
     tot = sync_tensor.cpu().tolist()
 
     submit = pd.DataFrame({'fname':fname, 'liveness_score':liveness_score})
-    submit.to_csv("submit.csv", index=False)
+   
+    cnt = len(glob('./*.csv'))
+    csv_name = f"submit_{cnt}.csv"
+    submit.to_csv(csv_name, index=False)
 
     print(f'Finished')
     print(f'Time to infer each video:', (datetime.now() - eval_st) / len(loader))
+    print("Save to", csv_name)
 
 if __name__ == '__main__': main()

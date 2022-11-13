@@ -17,12 +17,12 @@ try:
 except:
     pass
 
-filename = 'seed_1024_20_fold_0.zip'
-zip_file = os.path.join(from_download, filename)
-with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-    zip_ref.extractall(des)
+# filename = 'public_test.zip'
+# zip_file = os.path.join(from_download, filename)
+# with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+#     zip_ref.extractall(des)
 
-filename = 'public_test.zip'
+filename = 'seed_128_10_fold_0.zip'
 zip_file = os.path.join(from_download, filename)
 with zipfile.ZipFile(zip_file, 'r') as zip_ref:
     zip_ref.extractall(des)
