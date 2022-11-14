@@ -1,24 +1,28 @@
 #!/usr/bin/env sh
 # sudo kill -9 PID
 
-exp_dir=k400_b16_pretrain
+exp_dir=runs/k400_vitl14_16f_dec4x1024
 
 mkdir -p "${exp_dir}"
 python -u -m torch.distributed.run --nproc_per_node 1 \
-  convert_weight.py \
-    --backbone "ViT-B/16-lnpre" \
+  main.py \
+    --num_steps 1000 \
+    --save_freq 5 \
+    --eval_freq 5 \
+    --print_freq 5 \
+    --backbone "ViT-L/14-lnpre" \
     --backbone_type clip \
-    --backbone_path /storage/hieunmt/zaloai_liveness/download/ViT-B-16.pt \
-    --pretrain /storage/hieunmt/zaloai_liveness/download/k400_vitb16_16f_dec4x768.pth \
+    --backbone_path ../download/ViT-L-14.pt \
+    --pretrain k400_l14_pretrain/pretrain-checkpoint.pth \
     --decoder_num_layers 4 \
-    --decoder_qkv_dim 768 \
-    --decoder_num_heads 12 \
-    --num_classes 400 \
+    --decoder_qkv_dim 1024 \
+    --decoder_num_heads 16 \
+    --num_classes 2 \
     --checkpoint_dir "${exp_dir}" \
     --auto_resume \
     --train_list_path ../train.txt \
     --val_list_path ../val.txt \
-    --batch_size 80 \
+    --batch_size 24 \
     --batch_split 1 \
     --auto_augment rand-m7-n4-mstd0.5-inc1 \
     --mean 0.48145466 0.4578275 0.40821073 \

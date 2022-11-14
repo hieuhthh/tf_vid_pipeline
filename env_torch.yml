@@ -4,7 +4,8 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9
-  - pytorch=1.9.0=py3.9_cuda11.1_cudnn8.0.5_0
+  # - pytorch=1.9.0=py3.9_cuda11.1_cudnn8.0.5_0
+  - pytorch=1.12.1=py3.9_cuda11.3_cudnn8_0
   - cudatoolkit
   - torchvision
   - av

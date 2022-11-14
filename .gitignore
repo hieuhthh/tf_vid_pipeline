@@ -1,5 +1,5 @@
 efficient-video-recognition/runs
-efficient-video-recognition/k400_pretrain
+efficient-video-recognition/k400_b16_pretrain
 efficient-video-recognition/k400_l14_pretrain
 unzip
 download

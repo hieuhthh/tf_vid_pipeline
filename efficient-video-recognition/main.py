@@ -6,6 +6,7 @@ import builtins
 
 import torch
 import torch.distributed as dist
+import torch.nn.functional as F
 
 import video_dataset
 import checkpoint
@@ -20,7 +21,7 @@ import pandas as pd
 from glob import glob
 
 max_acc = 0
-min_loss = 1e10
+min_loss = 1e12
 is_best = False
 
 def setup_print(is_master: bool):
@@ -37,7 +38,6 @@ def setup_print(is_master: bool):
             builtin_print(*args, **kwargs)
 
     builtins.print = print
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -100,6 +100,11 @@ def main():
                         help='optionally split the batch into smaller shards and forward/backward one shard '
                              'at a time to avoid out-of-memory error.')
 
+    ##
+    parser.add_argument('--label_smoothing', type=float, default=0.1,
+                        help='label_smoothing for torch.nn.CrossEntropyLoss')
+    ##
+
     args = parser.parse_args()
 
     dist.init_process_group('nccl')
@@ -133,7 +138,8 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     lr_sched = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.num_steps)
     loss_scaler = torch.cuda.amp.grad_scaler.GradScaler(enabled=args.fp16)
-    criterion = torch.nn.CrossEntropyLoss()
+
+    criterion = torch.nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
 
     resume_step = checkpoint.resume_from_checkpoint(model, optimizer, lr_sched, loss_scaler, args)
 
@@ -155,7 +161,6 @@ def main():
         train_loader = video_dataset.create_train_loader(args, resume_step=resume_step)
 
     assert len(train_loader) == args.num_steps - resume_step
-    criterion = torch.nn.CrossEntropyLoss()
     batch_st, train_st = datetime.now(), datetime.now()
     for i, (data, labels) in enumerate(train_loader, resume_step):
         data, labels = data.cuda(), labels.cuda()
@@ -216,8 +221,9 @@ def main():
         
         batch_st = datetime.now()
 
-
 def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
+    criterion = torch.nn.CrossEntropyLoss()
+
     tot, hit1, hit5 = 0, 0, 0
     loss_value = 0
     eval_st = datetime.now()
@@ -229,8 +235,11 @@ def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
 
         with torch.no_grad():
             logits = model(data)
-            scores = logits.softmax(dim=-1).mean(dim=0)
-            loss = criterion(logits, labels)
+            scores = logits.mean(dim=0).softmax(dim=-1)
+
+            mean_logits = torch.unsqueeze(logits.mean(dim=0), 0)
+
+            loss = criterion(mean_logits, labels)
         
         loss_value += loss.item()
 
@@ -242,11 +251,15 @@ def evaluate(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
             print(f'[Evaluation] num_samples: {tot}  '
                   f'ETA: {(datetime.now() - eval_st) / tot * (len(loader) - tot)}  '
                   f'cumulative_acc1: {hit1 / tot * 100.:.2f}%  '
-                  f'cumulative_acc5: {hit5 / tot * 100.:.2f}%')
+                  f'cumulative_acc5: {hit5 / tot * 100.:.2f}% '
+                  f'loss: {loss_value}')
 
-    sync_tensor = torch.LongTensor([tot, hit1, hit5]).cuda()
+    scale = 1000000.0
+    loss_value = int(loss_value * scale)
+    sync_tensor = torch.LongTensor([tot, hit1, hit5, loss_value]).cuda()
     dist.all_reduce(sync_tensor)
-    tot, hit1, hit5 = sync_tensor.cpu().tolist()
+    tot, hit1, hit5, loss_value = sync_tensor.cpu().tolist()
+    loss_value = loss_value / scale
 
     print(f'Accuracy on validation set: top1={hit1 / tot * 100:.4f}%, top5={hit5 / tot * 100:.4f}%')
     print('Loss on validation set:', loss_value)
@@ -287,7 +300,7 @@ def do_infer(model: torch.nn.Module, loader: torch.utils.data.DataLoader):
 
         with torch.no_grad():
             logits = model(data)
-            scores = logits.softmax(dim=-1).mean(dim=0)
+            scores = logits.mean(dim=0).softmax(dim=-1)
 
         labels = labels[0]
         scores = scores.cpu().tolist()[1] # real

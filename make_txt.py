@@ -2,7 +2,8 @@ import os
 import numpy
 import shutil
 
-route = '/home/lap14880/hieunmt/tf_vid_pipeline/unzip/seed_128_10_fold_0'
+project_path = '/storage/hieunmt/zaloai_liveness'
+route = f'{project_path}/unzip/seed_42_20_fold_10'
 
 def convert_txt(route, file_txt, stage):
     with open(file_txt, "r") as f:

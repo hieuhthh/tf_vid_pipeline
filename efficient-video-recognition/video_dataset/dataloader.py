@@ -99,6 +99,9 @@ def create_train_loader(args: argparse.Namespace, resume_step: int = 0) -> torch
     dataset = create_train_dataset(args)
     rank, world_size = (0, 1) if not dist.is_initialized() else (dist.get_rank(), dist.get_world_size())
 
+    # print('args.batch_size', args.batch_size)
+    # print('world_size', world_size)
+
     assert args.batch_size % world_size == 0
     batch_size_per_gpu = args.batch_size // world_size
 

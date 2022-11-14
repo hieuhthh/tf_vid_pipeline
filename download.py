@@ -1,7 +1,7 @@
 import gdown
 import os
 
-project_path = '/home/lap14880/hieunmt/tf_vid_pipeline'
+project_path = '/storage/hieunmt/zaloai_liveness'
 
 try:
     os.mkdir(project_path)
@@ -27,6 +27,10 @@ except:
 # output = f"{des}/public_test.zip"
 # gdown.download(url=url, output=output, quiet=False, fuzzy=True)
 
+url = "https://drive.google.com/file/d/1dy5Qy0xp6XnpLOYf3JBVODKNPS_SADVD/view?usp=share_link"
+output = f"{des}/public_test_2.zip"
+gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+
 # url = "https://drive.google.com/file/d/1XBXm6gwQ88zCqXqCtQUrniVQWAR3wM4X/view?usp=share_link"
 # output = f"{des}/fold_0.zip"
 # gdown.download(url=url, output=output, quiet=False, fuzzy=True)
@@ -47,6 +51,10 @@ except:
 # output = f"{des}/k400_vitl14_16f_dec4x1024.pth"
 # gdown.download(url=url, output=output, quiet=False, fuzzy=True)
 
-url = "https://drive.google.com/file/d/1fGLhe1sOMo0OuFn3qC4qjn4CohJeJ22a/view?usp=share_link"
-output = f"{des}/ViT-L-14.pt"
-gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+# url = "https://drive.google.com/file/d/1fGLhe1sOMo0OuFn3qC4qjn4CohJeJ22a/view?usp=share_link"
+# output = f"{des}/ViT-L-14.pt"
+# gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+
+# url = "https://drive.google.com/file/d/19yJwlVUZyiL-3aaevjmLklsxHooWjsBD/view?usp=share_link"
+# output = f"{des}/seed_42_20_fold_10.zip"
+# gdown.download(url=url, output=output, quiet=False, fuzzy=True)
