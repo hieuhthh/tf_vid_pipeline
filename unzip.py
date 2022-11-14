@@ -22,12 +22,17 @@ except:
 # with zipfile.ZipFile(zip_file, 'r') as zip_ref:
 #     zip_ref.extractall(des)
 
-filename = 'public_test_2.zip'
-zip_file = os.path.join(from_download, filename)
-with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-    zip_ref.extractall(des)
+# filename = 'public_test_2.zip'
+# zip_file = os.path.join(from_download, filename)
+# with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+#     zip_ref.extractall(des)
 
 # filename = 'seed_42_20_fold_10.zip'
 # zip_file = os.path.join(from_download, filename)
 # with zipfile.ZipFile(zip_file, 'r') as zip_ref:
 #     zip_ref.extractall(des)
+
+filename = 'train_full.zip'
+zip_file = os.path.join(from_download, filename)
+with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+    zip_ref.extractall(des)

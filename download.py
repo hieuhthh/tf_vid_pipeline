@@ -27,9 +27,9 @@ except:
 # output = f"{des}/public_test.zip"
 # gdown.download(url=url, output=output, quiet=False, fuzzy=True)
 
-url = "https://drive.google.com/file/d/1dy5Qy0xp6XnpLOYf3JBVODKNPS_SADVD/view?usp=share_link"
-output = f"{des}/public_test_2.zip"
-gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+# url = "https://drive.google.com/file/d/1dy5Qy0xp6XnpLOYf3JBVODKNPS_SADVD/view?usp=share_link"
+# output = f"{des}/public_test_2.zip"
+# gdown.download(url=url, output=output, quiet=False, fuzzy=True)
 
 # url = "https://drive.google.com/file/d/1XBXm6gwQ88zCqXqCtQUrniVQWAR3wM4X/view?usp=share_link"
 # output = f"{des}/fold_0.zip"
@@ -58,3 +58,7 @@ gdown.download(url=url, output=output, quiet=False, fuzzy=True)
 # url = "https://drive.google.com/file/d/19yJwlVUZyiL-3aaevjmLklsxHooWjsBD/view?usp=share_link"
 # output = f"{des}/seed_42_20_fold_10.zip"
 # gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+
+url = "https://drive.google.com/file/d/17rOx3yX9lYKRwnNR7zLPYagRUmwPukBq/view?usp=share_link"
+output = f"{des}/train_full.zip"
+gdown.download(url=url, output=output, quiet=False, fuzzy=True)
