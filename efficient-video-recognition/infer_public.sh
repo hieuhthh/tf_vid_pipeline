@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # sudo kill -9 PID
 
-exp_dir=runs/k400_vitb16_16f_dec4x768
+exp_dir=runs/k400_vitb16_16f_dec4x768_exp2
 
 weight_path=${exp_dir}/best-checkpoint.pth
 

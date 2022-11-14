@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 # sudo kill -9 PID
 
-exp_dir=runs/k400_vitb16_16f_dec4x768
+exp_dir=runs/k400_vitb16_16f_dec4x768_exp2
 
 weight_path=${exp_dir}/best-checkpoint.pth
 
 mkdir -p "${exp_dir}"
-CUDA_VISIBLE_DEVICES=0 python -u -m torch.distributed.run --nproc_per_node 1 --master_port=6969 \
+CUDA_VISIBLE_DEVICES=3 python -u -m torch.distributed.run --nproc_per_node 1 --master_port=6969 \
   main.py \
     --infer_only \
     --pretrain $weight_path \
